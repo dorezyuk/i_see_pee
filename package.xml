@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="2">
+    <name>i_see_pee</name>
+    <version>0.0.0</version>
+    <description>The i_see_pee package</description>
+
+    <maintainer email="dmitrij.dorezyuk@hotmail.de">Dmitrij Dorezyuk</maintainer>
+    <author email="dmitrij.dorezyuk@hotmail.de">Dmitrij Dorezyuk</author>
+
+
+    <license>MIT</license>
+
+    <buildtool_depend>catkin</buildtool_depend>
+
+    <depend>grid_map_core</depend>
+    <depend>grid_map_ros</depend>
+    <depend>nav_msgs</depend>
+    <depend>tf2</depend>
+    <depend>tf2_ros</depend>
+    <depend>tf2_eigen</depend>
+    <depend>sensor_msgs</depend>
+</package>
