@@ -4,7 +4,7 @@ project(i_see_pee)
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11 -march=native)
 
-set(I_SEE_PEE_DEPS grid_map_core grid_map_ros nav_msgs tf2 tf2_ros tf2_eigen sensor_msgs)
+set(I_SEE_PEE_DEPS nav_msgs tf2 tf2_ros tf2_geometry_msgs roscpp geometry_msgs sensor_msgs)
 find_package(catkin REQUIRED ${I_SEE_PEE_DEPS})
 find_package(Eigen3 REQUIRED)
 
