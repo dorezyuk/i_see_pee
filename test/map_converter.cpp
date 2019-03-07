@@ -1,10 +1,6 @@
 #include <i_see_pee/i_see_pee.hpp>
 #include <gtest/gtest.h>
 
-// optional compliance test
-#include <grid_map_ros/GridMapRosConverter.hpp>
-#include <grid_map_core/GridMap.hpp>
-
 namespace i_see_pee{
 namespace map{
 
@@ -110,66 +106,6 @@ TEST(converter_death, out_of_bounds) {
 }
 
 } // namespace converter_death
-
-//namespace converter_compliance {
-//
-//struct converter_compliance_fixture : public ::testing::TestWithParam<grid_map::Index> {
-//
-//  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-//
-//  converter_compliance_fixture() {
-//     // setup the map parameter
-//     nav_msgs::MapMetaData meta_data;
-//     meta_data.origin.position.x = 10;
-//     meta_data.origin.position.y = -15;
-//     meta_data.resolution = 0.05;
-//     meta_data.width = 10;
-//     meta_data.height = 50;
-//
-//     // setup the occupancy grid map
-//     og_map.info = meta_data;
-//     og_map.header.frame_id = "map";
-//     og_map.data.resize(meta_data.width * meta_data.height);
-//     int8_t n = 0;
-//     std::generate(og_map.data.begin(), og_map.data.end(), [&n](){return std::abs(++n);});
-//
-//     // setup the grid_map
-//     grid_map::GridMapRosConverter::fromOccupancyGrid(og_map, "main", gm_map);
-//
-//     // setup a own map
-//     using matrix_t = Eigen::Matrix<double, 10, 50>;
-//     double *p = &icp_map(0, 0);
-//     std::copy(og_map.data.begin(), og_map.data.end(), p);
-//  }
-//  nav_msgs::OccupancyGrid og_map;
-//  grid_map::GridMap gm_map;
-//  Eigen::Matrix<double, 10, 50> icp_map;
-//};
-//
-//INSTANTIATE_TEST_CASE_P(/**/,
-//        converter_compliance_fixture,
-//        ::testing::Values(grid_map::Index(6, 40),
-//                          grid_map::Index(0, 0),
-//                          grid_map::Index(9, 49)));
-//
-//TEST_P(converter_compliance_fixture, DISABLED){
-//   converter icp_converter(og_map.info);
-//
-//   // get the grid map position and coordinate
-//   const grid_map::Index input = GetParam();
-//   grid_map::Position gm_pos;
-//
-//   gm_map.getPosition(input, gm_pos);
-//
-//   // get own coordinate from position
-//   const position_t icp_pos = gm_pos.cast<float>();
-//   const coordinate_t icp_cor = icp_converter.to_coordinate(icp_pos);
-//
-//   // assert that the mapping of both is same
-//   EXPECT_EQ(gm_map.at("main", input), icp_map(icp_cor(0), icp_cor(1)));
-//}
-//
-//} // namespace converter_compliance
 } // namespace map
 } // namespace i_see_pee
 
