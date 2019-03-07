@@ -144,6 +144,14 @@ knn_t::knn_t(const nav_msgs::MapMetaData &_grid, size_t _k) noexcept:
 knn_t::knn_t(const map_data &_parameter, size_t _k) noexcept:
         converter_(_parameter), k_(_k) {}
 
+constexpr size_t knn_parameter::k_max;
+constexpr size_t knn_parameter::k_min;
+constexpr size_t knn_parameter::k_def;
+
+constexpr size_t knn_parameter::radius_max;
+constexpr size_t knn_parameter::radius_min;
+constexpr size_t knn_parameter::radius_def;
+
 knn_parameter::knn_parameter(size_t _k, size_t _radius) noexcept :
         k_(cast_to_range(_k, k_min, k_max)),
         radius_(cast_to_range(_radius, radius_min, radius_max)) {}
@@ -521,6 +529,9 @@ transform_t point_to_map(matches&& _data, weight_t&& _w){
   return result;
 }
 
+constexpr float conversion_checker::t_norm;
+constexpr float conversion_checker::r_norm;
+
 conversion_checker::conversion_checker(float _t_norm, float _r_norm) noexcept :
         t_norm_(std::abs(_t_norm)), r_norm_(std::abs(_r_norm)) {}
 
@@ -538,6 +549,10 @@ bool conversion_checker::operator()(const transform_t& _in) noexcept {
 
   return t_norm_ > t_norm && r_norm_ > r_norm;
 }
+
+constexpr float sampler::percentage_def;
+constexpr float sampler::percentage_min;
+constexpr float sampler::percentage_max;
 
 sampler::sampler(float _percentage) noexcept :
         percentage_(cast_to_range(_percentage,
@@ -573,6 +588,9 @@ scan::scan_t sampler::operator()(const scan::scan_t& _in) noexcept {
   }
   return std::move(out);
 }
+
+constexpr size_t scan_matcher::max_iter;
+constexpr size_t scan_matcher::min_iter;
 
 scan_matcher::scan_matcher(ros::NodeHandle &_nh) : map_(_nh), knn_(nullptr) {
   ros::NodeHandle pnh(_nh, "icp");
