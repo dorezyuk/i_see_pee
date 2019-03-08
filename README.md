@@ -1,4 +1,4 @@
-# Overview [![Build Status](https://travis-ci.com/dorezyuk/i_see_pee.svg?branch=master)](https://travis-ci.com/dorezyuk/i_see_pee)
+# `i_see_pee` [![Build Status](https://travis-ci.com/dorezyuk/i_see_pee.svg?branch=master)](https://travis-ci.com/dorezyuk/i_see_pee)
 
 `i_see_pee` is a 2d localization package. At its core it uses an icp algorithm
 to determine the current robot position. Its main advantage is that it performs
