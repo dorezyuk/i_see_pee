@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- start i_see_pee_node -->
+    <node pkg="i_see_pee" type="i_see_pee_node" name="i_see_pee_node" output="screen">
+        <rosparam file="$(find i_see_pee)/config/example.yaml" command="load"/>
+    </node>
+</launch>
