@@ -1,0 +1,18 @@
+map:
+  topic: "/map"
+  k: 5      # min: 1, max: 10
+  radius: 5 # min: 0, max: 10
+
+odom:
+  map_frame: "map"
+  odom_frame: "odom"
+  base_frame: "base_link"
+
+scan:
+  topic: "/scan"
+
+icp:
+  t_norm: 0.01 # min: 0.01
+  r_norm: 0.01 # min: 0.01
+  max_iter: 100 # min: 1, max: 100
+  sample_percentage: 0.3 # min: 0, max: 1
