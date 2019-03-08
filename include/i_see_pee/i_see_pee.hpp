@@ -224,6 +224,8 @@ private:
 struct interface_rviz {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
+  static constexpr char topic[] = "/initialpose";
+
   // todo pass ref to map_frame_ instead of node handle
   interface_rviz(ros::NodeHandle &_nh, transform_t &_map_to_base) noexcept;
 

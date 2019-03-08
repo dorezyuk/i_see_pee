@@ -338,12 +338,14 @@ void interface_tf::set(const transform_t &_tf,
   tf_broadcaster_.sendTransform(out);
 }
 
+constexpr char interface_rviz::topic[];
+
 interface_rviz::interface_rviz(ros::NodeHandle &_nh,
                                transform_t &_map_to_base) noexcept
         : map_to_base_(_map_to_base) {
   ros::NodeHandle pnh(_nh, "odom");
   map_frame_ = pnh.param("map_frame", std::string{"map"});
-  sub_ = _nh.subscribe(std::string{"/initialpose"}, 1, &interface_rviz::callback, this);
+  sub_ = _nh.subscribe(std::string{topic}, 1, &interface_rviz::callback, this);
 }
 
 void interface_rviz::callback(
