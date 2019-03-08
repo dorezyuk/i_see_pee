@@ -373,7 +373,7 @@ frame_handler::frame_handler(ros::NodeHandle& _nh) :
 
   map_frame_ = pnh.param("map_frame", std::string{"map"});
   base_frame_ = pnh.param("base_frame", std::string{"base_link"});
-  odom_frame_ = pnh.param("odom", std::string{"odom"});
+  odom_frame_ = pnh.param("odom_frame", std::string{"odom"});
 }
 
 void frame_handler::handle_map_to_base() {
@@ -538,8 +538,8 @@ conversion_checker::conversion_checker(float _t_norm, float _r_norm) noexcept :
 conversion_checker::conversion_checker(ros::NodeHandle& _nh) {
   ros::NodeHandle pnh(_nh, "icp");
 
-  t_norm_ = pnh.param("t_norm", t_norm);
-  r_norm_ = pnh.param("r_norm", r_norm);
+  t_norm_ = std::max(pnh.param("t_norm", t_norm), t_norm);
+  r_norm_ = std::max(pnh.param("r_norm", r_norm), r_norm);
 }
 
 bool conversion_checker::operator()(const transform_t& _in) noexcept {
@@ -592,7 +592,8 @@ scan::scan_t sampler::operator()(const scan::scan_t& _in) noexcept {
 constexpr size_t scan_matcher::max_iter;
 constexpr size_t scan_matcher::min_iter;
 
-scan_matcher::scan_matcher(ros::NodeHandle &_nh) : map_(_nh), knn_(nullptr) {
+scan_matcher::scan_matcher(ros::NodeHandle &_nh) :
+        map_(_nh), is_converged_(_nh), sample_(_nh), knn_(nullptr) {
   ros::NodeHandle pnh(_nh, "icp");
 
   const auto raw = pnh.param("max_iter", static_cast<int>(max_iter));
