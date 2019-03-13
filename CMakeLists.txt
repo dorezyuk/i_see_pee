@@ -34,8 +34,8 @@ include_directories(
 add_library(${PROJECT_NAME} src/i_see_pee.cpp)
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
-add_executable(${PROJECT_NAME}-node src/i_see_pee_node.cpp)
-target_link_libraries(${PROJECT_NAME}-node ${PROJECT_NAME})
+add_executable(${PROJECT_NAME}_node src/i_see_pee_node.cpp)
+target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME})
 
 #############
 ## Testing ##
