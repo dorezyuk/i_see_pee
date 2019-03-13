@@ -12,4 +12,5 @@ int main(int argc, char** argv){
 
   controller c(nh);
   ros::spin();
+  return 0;
 }
