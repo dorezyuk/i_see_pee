@@ -22,7 +22,7 @@ inline std::string substring(const std::string& _in,
 
 #define __I_SEE_PEE_FUNCTION_NAME__ i_see_pee::substring(__PRETTY_FUNCTION__, "i_see_pee", "(")
 
-#define I_SEE_PEE_DEBUG (args) ROS_DEBUG_STREAM(__I_SEE_PEE_FUNCTION_NAME__ << ": " << args)
+#define I_SEE_PEE_DEBUG(args) ROS_DEBUG_STREAM(__I_SEE_PEE_FUNCTION_NAME__ << ": " << args)
 #define I_SEE_PEE_INFO(args) ROS_INFO_STREAM(__I_SEE_PEE_FUNCTION_NAME__ << ": " << args)
 #define I_SEE_PEE_WARN(args) ROS_WARN_STREAM(__I_SEE_PEE_FUNCTION_NAME__ << ": " << args)
 
