@@ -39,14 +39,17 @@ time.
 
 You will require [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page)
 for the compilation. Besides that the package can be compiled as a standard
-ros-package:
+ros-package.
+
+If you use [catkin tools](https://catkin-tools.readthedocs.io/en/latest/) you can
+compile the package with:
 
 ```
 cd catkin_ws/src
 git clone https://github.com/dorezyuk/i_see_pee.git
-cd catkin_ws/src
-catkin build --this
+catkin build i_see_pee -DCMAKE_BUILD_TYPE=Release
 ```
+Hint: make sure to compile the library as release
 
 Depending on your processor you should enable 
 [vectorization](http://eigen.tuxfamily.org/index.php?title=FAQ#How_can_I_enable_vectorization.3F) for Eigen.
