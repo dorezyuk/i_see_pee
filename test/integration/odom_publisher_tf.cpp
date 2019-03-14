@@ -17,6 +17,7 @@ int main(int argc, char** argv) {
     r.sleep();
     const transform_t unused = controller_.get_map_to_base();
     const transform_t map_to_odom = controller_.get_map_to_odom();
-    controller_.set_map_to_odom(map_to_odom);
+    const auto stamp = internal::to_stamp(ros::Time::now());
+    controller_.set_map_to_odom(map_to_odom, stamp);
   }
 }
