@@ -59,12 +59,13 @@ transform_t__ to_transform(const transform_t &_t) noexcept {
 }
 
 transform_t__ to_transform(const transform_t &_t,
+                           const stamp_t& _stamp,
                            const std::string &_frame,
                            const std::string &_child) noexcept {
   auto out = to_transform(_t);
+  out.header.stamp = to_stamp(_stamp);
   out.header.frame_id = _frame;
   out.child_frame_id = _child;
-  out.header.stamp = ros::Time::now();
 
   return out;
 }
@@ -305,7 +306,8 @@ void interface_::callback(const sensor_msgs::LaserScanConstPtr& _msg){
   scan.row(1) = cache_->row(1).array() * ranges.array();
 
   if(controller_) {
-    controller_->update(scan, _msg->header.frame_id);
+    const auto stamp = internal::to_stamp(_msg->header.stamp);
+    controller_->update(scan, stamp, _msg->header.frame_id);
   }
 }
 
@@ -332,9 +334,10 @@ transform_t interface_tf::get(const std::string &_from, const std::string &_to) 
 }
 
 void interface_tf::set(const transform_t &_tf,
+                       const stamp_t& _stamp,
                        const std::string &_from,
                        const std::string &_to) noexcept {
-  const auto out = internal::to_transform(_tf, _from, _to);
+  const auto out = internal::to_transform(_tf, _stamp, _from, _to);
   tf_broadcaster_.sendTransform(out);
 }
 
@@ -430,8 +433,9 @@ frame_handler::get_base_to_sensor(const std::string &_scan_frame) noexcept {
   return base_to_sensor_;
 }
 
-void frame_handler::set_map_to_odom(const transform_t& _tf) noexcept{
-  tf_.set(_tf, map_frame_, odom_frame_);
+void frame_handler::set_map_to_odom(const transform_t &_tf,
+                                    const stamp_t &_stamp) noexcept {
+  tf_.set(_tf, _stamp, map_frame_, odom_frame_);
 }
 
 } // namespace odom
@@ -639,6 +643,7 @@ controller::controller(ros::NodeHandle &_nh) :
         frame_handler_(_nh) {}
 
 void controller::update(const scan::scan_t &_scan,
+                        const stamp_t &_scan_stamp,
                         const std::string &_scan_frame) {
   // transform the data into global frame
   // todo add parameter not to run when there was no motion update
@@ -656,7 +661,7 @@ void controller::update(const scan::scan_t &_scan,
   const transform_t map_to_odom = frame_handler_.get_map_to_odom(new_to_base);
 
   // publish the transform
-  frame_handler_.set_map_to_odom(map_to_odom);
+  frame_handler_.set_map_to_odom(map_to_odom, _scan_stamp);
 }
 
 } // namespace i_see_pee

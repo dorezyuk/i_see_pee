@@ -44,6 +44,7 @@ target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME})
 catkin_add_gtest(${PROJECT_NAME}-test
     test/icp_converion_checker.cpp
     test/icp_point_to_map.cpp
+    test/internal_stamp.cpp
     test/iterator.cpp
     test/map_converter.cpp
     test/map_interpret.cpp

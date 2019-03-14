@@ -24,11 +24,17 @@ namespace i_see_pee {
 using index_t = size_t;
 using transform_t = Eigen::Affine2f;
 
+using stamp_rep_t = unsigned long;
+using stamp_t = std::chrono::duration<stamp_rep_t, std::nano>;
+
 namespace internal {
 
 using transform_t__ = geometry_msgs::TransformStamped;
 using pose_t__ = geometry_msgs::Pose;
 using quaternion_t__ = geometry_msgs::Quaternion;
+
+using stamp_rep_t__ = unsigned int;
+using stamp_t__ = ros::Time;
 
 inline bool is_valid(const quaternion_t__& _q) noexcept {
   // define a vector in order to check if the length of the quaternion is
@@ -39,10 +45,32 @@ inline bool is_valid(const quaternion_t__& _q) noexcept {
   return q.norm() <= 1.;
 }
 
+inline stamp_t to_stamp(const stamp_t__ &_t) noexcept {
+  // ros time stamp stores seconds and nanoseconds in two different fields
+  // we return a nanosecond duration representing both
+  const std::chrono::seconds s(_t.sec);
+  const std::chrono::nanoseconds n(_t.nsec);
+  return s + n;
+}
+
+inline stamp_t__ to_stamp(const stamp_t &_t) noexcept {
+  // pull the std::chrono namespace to maintain readability
+  using namespace std::chrono;
+  // cast the stamp first to seconds and subtract them from the full stamp to
+  // retrieve also the nanoseconds.
+  const auto s = duration_cast<seconds, stamp_rep_t>(_t);
+  const auto n = _t - s;
+  stamp_t__ out(static_cast<stamp_rep_t__>(s.count()),
+                static_cast<stamp_rep_t__>(n.count()));
+
+  return out;
+}
+
 transform_t to_transform(const transform_t__ &_tf) noexcept;
-transform_t to_transform(const pose_t__ & _p) noexcept;
+transform_t to_transform(const pose_t__ &_p) noexcept;
 transform_t__ to_transform(const transform_t &_t) noexcept;
 transform_t__ to_transform(const transform_t &_t,
+                           const stamp_t &_stamp,
                            const std::string &_frame,
                            const std::string &_child) noexcept;
 
@@ -180,7 +208,9 @@ scan_ptr_t cache(const parameter &_p) noexcept;
 
 struct controller_base_ {
   virtual ~controller_base_() = default;
-  virtual void update(const scan_t& _scan, const std::string& _scan_frame) {};
+  virtual void update(const scan_t &_scan,
+                      const stamp_t &_scan_stamp,
+                      const std::string &_scan_frame) {};
 };
 
 struct interface_ {
@@ -212,8 +242,9 @@ struct interface_tf {
   interface_tf();
   transform_t get(const std::string& _from, const std::string& _to);
   void set(const transform_t &_tf,
-          const std::string& _from,
-          const std::string& _to) noexcept;
+           const stamp_t &_stamp,
+           const std::string &_from,
+           const std::string &_to) noexcept;
 
 private:
   tf2_ros::Buffer buffer_;
@@ -246,7 +277,7 @@ struct frame_handler {
   transform_t get_map_to_odom(const transform_t& _map_to_base) noexcept ;
   transform_t get_base_to_sensor(const std::string& _scan_frame) noexcept;
 
-  void set_map_to_odom(const transform_t& _tf) noexcept;
+  void set_map_to_odom(const transform_t& _tf, const stamp_t& _stamp) noexcept;
 
 private:
   void handle_map_to_base();
@@ -334,7 +365,9 @@ private:
 struct controller : public scan::controller_base_ {
 
   explicit controller(ros::NodeHandle& _nh);
-  void update(const scan::scan_t& _scan, const std::string& _scan_frame) override;
+  void update(const scan::scan_t &_scan,
+              const stamp_t &_stamp,
+              const std::string &_scan_frame) override;
 
 private:
   icp::scan_matcher icp_;

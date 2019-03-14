@@ -10,7 +10,9 @@ struct interface_fixture :
         public interface_,
         public ::testing::Test {
   interface_fixture() : interface_(this), has_data_(false){}
-  void update(const scan::scan_t& _scan, const std::string& _scan_frame) override {
+  void update(const scan::scan_t &_scan,
+              const stamp_t &_stamp,
+              const std::string &_scan_frame) override {
     scan_ = _scan;
     scan_frame_ = _scan_frame;
     has_data_ = true;
