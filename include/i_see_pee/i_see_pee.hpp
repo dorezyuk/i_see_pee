@@ -327,17 +327,17 @@ private:
 
 struct sampler {
 
-  static constexpr float percentage_def = .3f;
-  static constexpr float percentage_min = 0.f;
-  static constexpr float percentage_max = 1.f;
+  static constexpr size_t stride_def = 3;
+  static constexpr size_t stride_min = 1;
+  static constexpr size_t stride_max = 100;
 
-  explicit sampler(float _percentage = percentage_def) noexcept;
+  explicit sampler(size_t _stride = stride_def) noexcept;
   explicit sampler(ros::NodeHandle& _nh);
 
   scan::scan_t operator()(const scan::scan_t& _in) noexcept;
 
 private:
-  float percentage_;
+  size_t stride_;
 
   std::random_device rd_;
   std::mt19937 gen_;
