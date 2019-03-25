@@ -556,41 +556,42 @@ bool conversion_checker::operator()(const transform_t& _in) noexcept {
   return t_norm_ > t_norm && r_norm_ > r_norm;
 }
 
-constexpr float sampler::percentage_def;
-constexpr float sampler::percentage_min;
-constexpr float sampler::percentage_max;
+constexpr size_t sampler::stride_def;
+constexpr size_t sampler::stride_min;
+constexpr size_t sampler::stride_max;
 
-sampler::sampler(float _percentage) noexcept :
-        percentage_(cast_to_range(_percentage,
-                                  percentage_min,
-                                  percentage_max)),
+sampler::sampler(size_t _stride) noexcept :
+        stride_(cast_to_range(_stride, stride_min, stride_max)),
         gen_(rd_()),
         dist_(0.0) {}
 
 sampler::sampler(ros::NodeHandle &_nh) : gen_(rd_()), dist_(0.0) {
   ros::NodeHandle pnh(_nh, "icp");
 
-  const auto raw = pnh.param("sample_percentage", percentage_def);
-  percentage_ = cast_to_range(raw, percentage_min, percentage_max);
+  const auto raw = pnh.param("stride", static_cast<int>(stride_def));
+  stride_ = cast_to_range(static_cast<decltype(stride_def)>(raw),
+                          stride_min,
+                          stride_max);
 }
 
 scan::scan_t sampler::operator()(const scan::scan_t& _in) noexcept {
   // check if sampling is required
-  if (percentage_ == percentage_max ||
-      percentage_ == percentage_min ||
-      _in.cols() == 0) {
+  if (stride_ == stride_min) {
     return _in;
   }
   // get desired size and allocate memory
-  const auto size =  static_cast<size_t>(_in.cols() * percentage_);
+  const auto size =  _in.cols() / stride_;
   scan::scan_t out(_in.rows(), size);
 
+  // get a random start position
+  auto ii = static_cast<size_t>(dist_(gen_) * _in.cols());
+
   // populate the output
-  // todo see if faster methods are available
-  for(size_t cc = 0; cc < size; ++cc){
-    const auto raw = static_cast<size_t>(_in.cols() * dist_(gen_));
-    const auto jj = std::min(raw, _in.cols() - 1ul);
-    out.col(cc) = _in.col(jj);
+  for(size_t cc = 0; cc < size; ++cc, ii += stride_){
+    if(ii >= _in.cols()){
+      ii %= _in.cols();
+    }
+    out.col(cc) = _in.col(ii);
   }
   return std::move(out);
 }

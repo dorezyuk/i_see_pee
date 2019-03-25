@@ -11,6 +11,7 @@ template <typename T>
 T cast_to_range (T _in, T _min, T _max) noexcept {
   static_assert(std::is_arithmetic<T>::value, "must be arithmetic");
 
+  // todo maybe minmax it
   const auto min = std::min(_in, _max);
   return std::max(_min, min);
 }
