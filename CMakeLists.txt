@@ -48,6 +48,7 @@ catkin_add_gtest(${PROJECT_NAME}-test
     test/iterator.cpp
     test/map_converter.cpp
     test/map_interpret.cpp
+    test/map_is_reachable.cpp
     test/odom_interface_tf.cpp
     test/scan_interface.cpp
     test/utils.cpp

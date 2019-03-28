@@ -143,7 +143,7 @@ using map_value__ = signed char;
 constexpr map_value__ occupied = 50;
 
 inline bool is_occupied(map_value__ _val) noexcept {
-  return _val > occupied;
+  return _val >= occupied;
 }
 
 struct knn_parameter {
@@ -164,6 +164,16 @@ struct knn_parameter {
 
   friend std::ostream &operator<<(std::ostream &_os,
                                   const knn_parameter &_p) noexcept;
+};
+
+struct is_reachable {
+
+  explicit is_reachable(const nav_msgs::OccupancyGrid &_grid) noexcept;
+  bool operator()(index_t _center) noexcept;
+
+private:
+  const nav_msgs::OccupancyGrid &grid_;
+  const converter converter_;
 };
 
 knn_ptr_t interpret(const nav_msgs::OccupancyGrid &grid,
