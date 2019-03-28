@@ -6,7 +6,7 @@
 
 #include <tf2/utils.h>
 
-namespace i_see_pee{
+namespace i_see_pee {
 
 namespace internal {
 
@@ -176,6 +176,43 @@ std::ostream &operator<<(std::ostream &_os, const knn_parameter &_p) noexcept {
   return _os;
 }
 
+is_reachable::is_reachable(const nav_msgs::OccupancyGrid &_grid) noexcept :
+        grid_(_grid), converter_(_grid.info) {}
+
+bool is_reachable::operator()(index_t _center) noexcept {
+  // pull the submap iterator and its defines into namespace
+  using iterator_t = submap_iterator<long int>;
+  using data_t = typename iterator_t::data_t;
+  using bound_t = typename iterator_t::bound_t;
+
+  const bound_t moore_neighbors(3, 3);
+
+  // check if the center is valid
+  if (!converter_.valid(_center)) {
+    return false;
+  }
+
+  // prepare for the iteration
+  const coordinate_t center_c = converter_.to_coordinate(_center);
+  const data_t start_c = center_c.cast<long int>() - data_t::Ones();
+  static const bound_t moore_size(3, 3);
+
+  // check the moore-neighborhood around the center
+  for (iterator_t ii(start_c, moore_size); !ii.past_end(); ++ii) {
+    // check if the coordinate is valid
+    const coordinate_t current_c = ii->cast<size_t>();
+    if (!converter_.valid_coordinate(current_c)) {
+      continue;
+    }
+    // cannot throw at this point anymore
+    const index_t current_i = converter_.to_index(current_c);
+    if (!is_occupied(grid_.data[current_i])) {
+      return true;
+    }
+  }
+  return false;
+}
+
 knn_ptr_t interpret(const nav_msgs::OccupancyGrid &_grid,
                     const knn_parameter &_p) noexcept {
   // pull definitions into namespace
@@ -186,10 +223,17 @@ knn_ptr_t interpret(const nav_msgs::OccupancyGrid &_grid,
   knn_ptr_t out = knn_ptr_t(new knn_t(_grid.info, _p.k_));
   const auto&c = out->converter_;
 
+  is_reachable reachable(_grid);
+
   // iterate over the entire grid
   for(size_t index = 0; index != _grid.data.size(); ++index){
     // pick only the occupied cells
     if(!is_occupied(_grid.data[index])){
+      continue;
+    }
+
+    // check if the cell is reachable
+    if(!reachable(index)){
       continue;
     }
 
@@ -568,27 +612,28 @@ sampler::sampler(size_t _stride) noexcept :
 sampler::sampler(ros::NodeHandle &_nh) : gen_(rd_()), dist_(0.0) {
   ros::NodeHandle pnh(_nh, "icp");
 
+  // use workaround through int, since ros::NodeHandle cannot handle size_t
   const auto raw = pnh.param("stride", static_cast<int>(stride_def));
   stride_ = cast_to_range(static_cast<decltype(stride_def)>(raw),
                           stride_min,
                           stride_max);
 }
 
-scan::scan_t sampler::operator()(const scan::scan_t& _in) noexcept {
+scan::scan_t sampler::operator()(const scan::scan_t &_in) noexcept {
   // check if sampling is required
   if (stride_ == stride_min) {
     return _in;
   }
   // get desired size and allocate memory
-  const auto size =  _in.cols() / stride_;
+  const auto size = _in.cols() / stride_;
   scan::scan_t out(_in.rows(), size);
 
   // get a random start position
   auto ii = static_cast<size_t>(dist_(gen_) * _in.cols());
 
   // populate the output
-  for(size_t cc = 0; cc < size; ++cc, ii += stride_){
-    if(ii >= _in.cols()){
+  for (size_t cc = 0; cc < size; ++cc, ii += stride_) {
+    if (ii >= _in.cols()) {
       ii %= _in.cols();
     }
     out.col(cc) = _in.col(ii);

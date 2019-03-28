@@ -8,13 +8,13 @@ namespace i_see_pee {
 
 template<typename T>
 struct centered_submap_iterator {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   using data_t = Eigen::Matrix<T, 2ul, 1ul>;
   using bound_t = Eigen::Matrix<size_t, 2ul, 1ul>;
 
   explicit centered_submap_iterator(const bound_t &_dim) noexcept :
-      size_(_dim.cast<T>()), curr_(data_t::Zero()), prod_(size_.prod()) {
-  }
+          size_(_dim.cast<T>()), curr_(data_t::Zero()), prod_(size_.prod()) {}
 
   centered_submap_iterator &operator++() noexcept {
     ++curr_(1);
@@ -44,6 +44,7 @@ private:
 
 template<typename T>
 struct submap_iterator {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   using centered_submap_iterator_t = centered_submap_iterator<T>;
   using data_t = typename centered_submap_iterator_t::data_t;
@@ -80,12 +81,13 @@ private:
 
 template<typename T>
 struct circle_iterator {
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
   using submap_iterator_t = submap_iterator<T>;
   using data_t = typename submap_iterator_t::data_t;
   using bound_t = typename submap_iterator_t::bound_t;
 
-  circle_iterator(const data_t& _center, T _radius) noexcept :
+  circle_iterator(const data_t &_center, T _radius) noexcept :
           center_(_center), radius_(_radius) {
     // get the positive radius
     _radius = std::abs(_radius);
@@ -93,20 +95,19 @@ struct circle_iterator {
     // get the submap parameters with 1 pixel at the center
     const data_t rad(_radius, _radius);
     const data_t begin = _center - rad;
-    const bound_t size = rad. template cast<size_t>() * 2 + bound_t::Ones();
+    const bound_t size = rad.template cast<size_t>() * 2 + bound_t::Ones();
     iter_ = submap_iterator_t(begin, size);
 
     // advance till valid position to allow instant access
-    while(!valid(*iter_)){
+    while (!valid(*iter_)) {
       ++iter_;
     }
   }
 
-  circle_iterator& operator++() noexcept {
-    do{
+  circle_iterator &operator++() noexcept {
+    do {
       ++iter_;
-    }
-    while(!iter_.past_end() && !valid(*iter_));
+    } while (!iter_.past_end() && !valid(*iter_));
     return *this;
   }
 
@@ -124,7 +125,7 @@ struct circle_iterator {
 
 private:
 
-  bool valid(const data_t& _d) const noexcept {
+  bool valid(const data_t &_d) const noexcept {
     return (center_ - _d).norm() <= radius_;
   }
 
