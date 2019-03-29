@@ -593,11 +593,11 @@ conversion_checker::conversion_checker(ros::NodeHandle& _nh) {
 }
 
 bool conversion_checker::operator()(const transform_t& _in) noexcept {
-  const auto t_norm = _in.translation().norm();
+  const auto t_curr = _in.translation().norm();
   const auto angle = std::atan2(_in.linear()(1, 0), _in.linear()(0, 0));
-  const auto r_norm = std::abs(angle);
+  const auto r_curr = std::abs(angle);
 
-  return t_norm_ > t_norm && r_norm_ > r_norm;
+  return t_norm_ > t_curr && r_norm_ > r_curr;
 }
 
 constexpr size_t sampler::stride_def;
