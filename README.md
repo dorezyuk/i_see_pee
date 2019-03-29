@@ -123,12 +123,13 @@ stops, if the norm of the generated correction transform is smaller then
 - type: `int`
 - default: 100 (min: 1, max: 100)
 
-#### `icp/sample_percentage`
-- in order to speed up the computation one can reduce the point cloud size by
-applying random sampling. The parameter defines how much percent of the original
-point cloud should be used for scan matching
-- type: `float`
-- default: 0.3 (min: 0, max: 1)
+#### `icp/stride`
+- in order to speed up the computation one can reduce the point cloud size. 
+Applying a stride of 'n' will take only every *nth* point into consideration. 
+The starting point defines hence which points will be drawn. It is drawn at 
+random.
+- type: `int`
+- default: 3 (min: 1, max: 100)
 
 # Understanding
 
