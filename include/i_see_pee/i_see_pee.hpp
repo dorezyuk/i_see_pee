@@ -342,16 +342,18 @@ struct sampler {
   static constexpr size_t stride_max = 100;
 
   explicit sampler(size_t _stride = stride_def) noexcept;
-  explicit sampler(ros::NodeHandle& _nh);
+  explicit sampler(ros::NodeHandle &_nh);
 
-  scan::scan_t operator()(const scan::scan_t& _in) noexcept;
+  scan::scan_t operator()(const scan::scan_t &_in) noexcept;
 
 private:
   size_t stride_;
 
   std::random_device rd_;
   std::mt19937 gen_;
-  std::uniform_real_distribution<float> dist_;
+
+  using distribution_t = std::uniform_int_distribution<size_t>;
+  distribution_t dist_;
 };
 
 struct scan_matcher {
