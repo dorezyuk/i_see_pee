@@ -81,6 +81,12 @@ namespace map {
 using position_t = Eigen::Vector2f;
 using coordinate_t = Eigen::Matrix<size_t, 2ul, 1ul>;
 
+inline bool is_valid(const nav_msgs::OccupancyGrid &_map) noexcept {
+  // data is only valid, if the product of height * width corresponds to
+  // allocated vector size
+  return _map.info.height * _map.info.width == _map.data.size();
+}
+
 struct map_data {
 
   explicit map_data(const nav_msgs::MapMetaData &m) noexcept;

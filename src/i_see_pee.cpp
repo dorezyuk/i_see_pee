@@ -285,7 +285,13 @@ bool interface::move_data(knn_ptr_t &_knn) noexcept {
   return false;
 }
 
-void interface::callback(const nav_msgs::OccupancyGridConstPtr& _msg) noexcept {
+void interface::callback(const nav_msgs::OccupancyGridConstPtr &_msg) noexcept {
+  // before using the raw data, verify its integrity
+  if (!is_valid(*_msg)) {
+    I_SEE_PEE_WARN("map info does not match grid-size");
+    return;
+  }
+
   I_SEE_PEE_INFO("stating...");
   knn_ = interpret(*_msg, p_);
   I_SEE_PEE_INFO("done.");
