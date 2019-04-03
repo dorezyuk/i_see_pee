@@ -613,9 +613,9 @@ constexpr size_t sampler::stride_max;
 sampler::sampler(size_t _stride) noexcept :
         stride_(cast_to_range(_stride, stride_min, stride_max)),
         gen_(rd_()),
-        dist_(0.0) {}
+        dist_(distribution_t::param_type(0, stride_ - 1)){}
 
-sampler::sampler(ros::NodeHandle &_nh) : gen_(rd_()), dist_(0.0) {
+sampler::sampler(ros::NodeHandle &_nh) : gen_(rd_()) {
   ros::NodeHandle pnh(_nh, "icp");
 
   // use workaround through int, since ros::NodeHandle cannot handle size_t
@@ -623,25 +623,27 @@ sampler::sampler(ros::NodeHandle &_nh) : gen_(rd_()), dist_(0.0) {
   stride_ = cast_to_range(static_cast<decltype(stride_def)>(raw),
                           stride_min,
                           stride_max);
+  // adjust the parameter of the uniform distribution in [0, stride_)
+  // subtraction by one is over-low-safe, since stride is inside [1, 100]
+  distribution_t::param_type param(0, stride_ - 1);
+  dist_.param(param);
 }
 
 scan::scan_t sampler::operator()(const scan::scan_t &_in) noexcept {
-  // check if sampling is required
-  if (stride_ == stride_min) {
+  // check if sampling is required and if the input is valid
+  if (stride_ == stride_min || stride_ >= _in.cols()) {
     return _in;
   }
+
   // get desired size and allocate memory
   const auto size = _in.cols() / stride_;
   scan::scan_t out(_in.rows(), size);
 
-  // get a random start position
-  auto ii = static_cast<size_t>(dist_(gen_) * _in.cols());
+  // get a random start position in [0, stride_)
+  auto ii = dist_(gen_);
 
   // populate the output
   for (size_t cc = 0; cc < size; ++cc, ii += stride_) {
-    if (ii >= _in.cols()) {
-      ii %= _in.cols();
-    }
     out.col(cc) = _in.col(ii);
   }
   return std::move(out);
