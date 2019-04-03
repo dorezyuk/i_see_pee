@@ -74,29 +74,29 @@ transform_t__ to_transform(const transform_t &_t,
 
 namespace map{
 
-map_data::map_data(const nav_msgs::MapMetaData& m) noexcept:
-  resolution(std::abs(m.resolution)),
-  origin(m.origin.position.x, m.origin.position.y),
-  size(m.width, m.height)  {}
+map_data::map_data(const nav_msgs::MapMetaData &m) noexcept:
+        resolution(std::abs(m.resolution)),
+        origin(m.origin.position.x, m.origin.position.y),
+        size(m.width, m.height) {}
 
 map_data::map_data(const coordinate_t &_size,
                    float _resolution,
                    const position_t &_origin) noexcept:
         size(_size), resolution(std::abs(_resolution)), origin(_origin) {}
 
-converter::converter(const map_data& _p) noexcept : p_(_p){}
-converter::converter(const nav_msgs::MapMetaData& m) noexcept : p_(m){}
+converter::converter(const map_data &_p) noexcept : p_(_p) {}
+converter::converter(const nav_msgs::MapMetaData &m) noexcept : p_(m) {}
 
-coordinate_t converter::to_coordinate(const position_t & _p) const {
+coordinate_t converter::to_coordinate(const position_t &_p) const {
   // get the relative position
   const position_t relative = _p - p_.origin;
-  if(relative.minCoeff() < 0){
+  if (relative.minCoeff() < 0) {
     throw std::out_of_range("position out of bounds");
   }
 
   // cast the relative position to coordinate
   const coordinate_t out = (relative / p_.resolution).cast<size_t>();
-  if(!valid_coordinate(out)){
+  if (!valid_coordinate(out)) {
     throw std::out_of_range("position out of bounds");
   }
   return out;
@@ -106,27 +106,27 @@ coordinate_t converter::to_coordinate(index_t i) const {
   size_t col = i % p_.size(0);
   size_t row = i / p_.size(0);
   const coordinate_t out(col, row);
-  if(!valid_coordinate(out)){
+  if (!valid_coordinate(out)) {
     throw std::out_of_range("index out of bounds");
   }
   return out;
 }
 
-index_t converter::to_index(const position_t& p) const {
+index_t converter::to_index(const position_t &p) const {
   // can throw std::runtime_error if the position is invalid
   const coordinate_t c = to_coordinate(p);
   return to_index(c);
 }
 
-index_t converter::to_index(const coordinate_t& c) const {
-  if(!valid_coordinate(c)){
+index_t converter::to_index(const coordinate_t &c) const {
+  if (!valid_coordinate(c)) {
     throw std::out_of_range("coordinate out of bounds");
   }
   return c(0) + c(1) * p_.size(0);
 }
 
 position_t converter::to_position(index_t _i) const {
-  if(!valid(_i)){
+  if (!valid(_i)) {
     throw std::out_of_range("invalid index");
   }
   // cannot throw anymore
@@ -221,29 +221,29 @@ knn_ptr_t interpret(const nav_msgs::OccupancyGrid &_grid,
 
   // setup the output structure
   knn_ptr_t out = knn_ptr_t(new knn_t(_grid.info, _p.k_));
-  const auto&c = out->converter_;
+  const auto &c = out->converter_;
 
   is_reachable reachable(_grid);
 
   // iterate over the entire grid
-  for(size_t index = 0; index != _grid.data.size(); ++index){
+  for (size_t index = 0; index != _grid.data.size(); ++index) {
     // pick only the occupied cells
-    if(!is_occupied(_grid.data[index])){
+    if (!is_occupied(_grid.data[index])) {
       continue;
     }
 
     // check if the cell is reachable
-    if(!reachable(index)){
+    if (!reachable(index)) {
       continue;
     }
 
     // rotate around the occupied cells
     const data_t center = c.to_coordinate(index).cast<long int>();
     const position_t p_occ = c.to_position(index);
-    for(circle_iterator_t ci(center, _p.radius_); !ci.past_end(); ++ci){
+    for (circle_iterator_t ci(center, _p.radius_); !ci.past_end(); ++ci) {
       const coordinate_t c_nb = ci->cast<size_t>();
       // skip the cells of the grid
-      if(!c.valid_coordinate(c_nb)){
+      if (!c.valid_coordinate(c_nb)) {
         continue;
       }
 
@@ -253,7 +253,7 @@ knn_ptr_t interpret(const nav_msgs::OccupancyGrid &_grid,
       const index_t i_nb = c.to_index(c_nb);
 
       // if the cell has no knn's yet reserve for it
-      if(out->knn_.find(i_nb) == out->knn_.end()){
+      if (out->knn_.find(i_nb) == out->knn_.end()) {
         out->knn_[i_nb].reserve(_p.k_);
       }
 
@@ -268,15 +268,15 @@ knn_ptr_t interpret(const nav_msgs::OccupancyGrid &_grid,
   return std::move(out);
 }
 
-interface::interface(ros::NodeHandle &_nh) : p_(_nh), knn_(nullptr){
+interface::interface(ros::NodeHandle &_nh) : p_(_nh), knn_(nullptr) {
   ros::NodeHandle pnh(_nh, "map");
 
-  std::string topic = pnh.param("topic", std::string("/map") );
+  std::string topic = pnh.param("topic", std::string{"/map"});
   sub_ = pnh.subscribe(topic, 1, &interface::callback, this);
 }
 
 bool interface::move_data(knn_ptr_t &_knn) noexcept {
-  if(knn_){
+  if (knn_) {
     // will reset the knn_ to nullptr as defined in
     // https://en.cppreference.com/w/cpp/memory/unique_ptr
     _knn = std::move(knn_);
@@ -327,10 +327,12 @@ bool parameter::operator!=(const parameter &_other) const noexcept {
   return !(*this == _other);
 }
 
-scan_ptr_t cache(const parameter& _p) noexcept {
+scan_ptr_t cache(const parameter &_p) noexcept {
+  // allocate the data for the cache
   scan_ptr_t out = scan_ptr_t(new scan_t(2, _p.size));
   float angle = _p.angle_min;
-  for(size_t ii = 0; ii < _p.size; ++ii){
+  // cache the transformation of the sensor_msgs::LaserScan to scan::scan_t
+  for (size_t ii = 0; ii < _p.size; ++ii) {
     out->col(ii) << std::cos(angle), std::sin(angle);
     angle += _p.increment;
   }
@@ -340,11 +342,11 @@ scan_ptr_t cache(const parameter& _p) noexcept {
 interface_::interface_(controller_base_ *_controller) :
         controller_(_controller), p_(nullptr), cache_(nullptr) {}
 
-void interface_::callback(const sensor_msgs::LaserScanConstPtr& _msg){
+void interface_::callback(const sensor_msgs::LaserScanConstPtr &_msg) {
   parameter_ptr_t p_new = parameter_ptr_t(new parameter(*_msg));
   // update the cache if the scan parameters have changed
   // todo change to hash map to support multiple topics
-  if(!p_ || *p_ != *p_new){
+  if (!p_ || *p_ != *p_new) {
     p_ = std::move(p_new);
     cache_ = cache(*p_);
   }
@@ -352,7 +354,7 @@ void interface_::callback(const sensor_msgs::LaserScanConstPtr& _msg){
   // avoid accessing the data when the vector is empty, since this is
   // not defined by the c++ standard:
   // https://en.cppreference.com/w/cpp/container/vector/data
-  if(_msg->ranges.empty()){
+  if (_msg->ranges.empty()) {
     return;
   }
 
@@ -364,7 +366,7 @@ void interface_::callback(const sensor_msgs::LaserScanConstPtr& _msg){
   scan.row(0) = cache_->row(0).array() * ranges.array();
   scan.row(1) = cache_->row(1).array() * ranges.array();
 
-  if(controller_) {
+  if (controller_) {
     const auto stamp = internal::to_stamp(_msg->header.stamp);
     controller_->update(scan, stamp, _msg->header.frame_id);
   }
@@ -373,7 +375,7 @@ void interface_::callback(const sensor_msgs::LaserScanConstPtr& _msg){
 interface::interface(ros::NodeHandle &_nh, controller_base_ *_controller) :
         interface_(_controller) {
   ros::NodeHandle pnh(_nh, "scan");
-  const std::string topic = pnh.param("topic", std::string("/scan"));
+  const std::string topic = pnh.param("topic", std::string{"/scan"});
   sub_ = _nh.subscribe(topic,
                        1,
                        &interface::callback,
@@ -393,7 +395,7 @@ transform_t interface_tf::get(const std::string &_from, const std::string &_to) 
 }
 
 void interface_tf::set(const transform_t &_tf,
-                       const stamp_t& _stamp,
+                       const stamp_t &_stamp,
                        const std::string &_from,
                        const std::string &_to) noexcept {
   const auto out = internal::to_transform(_tf, _stamp, _from, _to);
@@ -413,13 +415,13 @@ interface_rviz::interface_rviz(ros::NodeHandle &_nh,
 void interface_rviz::callback(
         const geometry_msgs::PoseWithCovarianceStampedConstPtr &_msg) noexcept {
   // check if the frame is valid (must be "map")
-  if(_msg->header.frame_id != map_frame_){
+  if (_msg->header.frame_id != map_frame_) {
     I_SEE_PEE_WARN("the frame must be " << map_frame_);
     return;
   }
 
   // check if rotation is valid
-  if(!internal::is_valid(_msg->pose.pose.orientation)){
+  if (!internal::is_valid(_msg->pose.pose.orientation)) {
     I_SEE_PEE_WARN("ill configured quaternion");
     return;
   }
@@ -428,7 +430,7 @@ void interface_rviz::callback(
   map_to_base_ = internal::to_transform(_msg->pose.pose);
 }
 
-frame_handler::frame_handler(ros::NodeHandle& _nh) :
+frame_handler::frame_handler(ros::NodeHandle &_nh) :
         rviz_(_nh, map_to_base_),
         base_to_sensor_(transform_t::Identity()),
         map_to_base_(transform_t::Identity()),
@@ -454,7 +456,7 @@ void frame_handler::handle_map_to_base() {
   map_to_base_ = map_to_new;
 }
 
-void frame_handler::handle_base_to_sensor(const std::string& _scan_frame){
+void frame_handler::handle_base_to_sensor(const std::string &_scan_frame) {
   // will throw if lookup transform fails
   base_to_sensor_ = tf_.get(base_frame_, _scan_frame);
 }
@@ -463,7 +465,7 @@ transform_t frame_handler::get_map_to_base() noexcept {
   try {
     handle_map_to_base();
   }
-  catch(std::runtime_error &ex){
+  catch (std::runtime_error &ex) {
     I_SEE_PEE_WARN(ex.what());
   }
 
@@ -475,17 +477,17 @@ transform_t frame_handler::get_map_to_odom() const noexcept {
 }
 
 transform_t
-frame_handler::get_map_to_odom(const transform_t& _map_to_base) noexcept {
+frame_handler::get_map_to_odom(const transform_t &_map_to_base) noexcept {
   map_to_base_ = _map_to_base;
   return get_map_to_odom();
 }
 
 transform_t
 frame_handler::get_base_to_sensor(const std::string &_scan_frame) noexcept {
-  try{
+  try {
     handle_base_to_sensor(_scan_frame);
   }
-  catch(tf2::TransformException& ex){
+  catch (tf2::TransformException &ex) {
     I_SEE_PEE_WARN(ex.what());
   }
 
@@ -541,14 +543,14 @@ matches::matches(const scan::scan_t &_scan, const map::knn_t &_knn) noexcept :
   sensor_.conservativeResize(Eigen::NoChange, jj);
 }
 
-weight_t get_weights(const matches& _data){
+weight_t get_weights(const matches &_data) {
   // assert that the input data is well conditioned
   assert(_data.map_.cols() == _data.sensor_.cols());
   const auto cols = _data.map_.cols();
   weight_t out(cols);
 
   // iterate over match pairs
-  for(size_t cc = 0; cc < cols; ++cc){
+  for (size_t cc = 0; cc < cols; ++cc) {
     const auto unused = (_data.map_.col(cc) - _data.sensor_.col(cc)).norm();
     out(cc) = 1;
   }
@@ -600,14 +602,14 @@ constexpr float conversion_checker::r_norm;
 conversion_checker::conversion_checker(float _t_norm, float _r_norm) noexcept :
         t_norm_(std::abs(_t_norm)), r_norm_(std::abs(_r_norm)) {}
 
-conversion_checker::conversion_checker(ros::NodeHandle& _nh) {
+conversion_checker::conversion_checker(ros::NodeHandle &_nh) {
   ros::NodeHandle pnh(_nh, "icp");
 
   t_norm_ = std::max(pnh.param("t_norm", t_norm), t_norm);
   r_norm_ = std::max(pnh.param("r_norm", r_norm), r_norm);
 }
 
-bool conversion_checker::operator()(const transform_t& _in) noexcept {
+bool conversion_checker::operator()(const transform_t &_in) noexcept {
   const auto t_curr = _in.translation().norm();
   const auto angle = std::atan2(_in.linear()(1, 0), _in.linear()(0, 0));
   const auto r_curr = std::abs(angle);
@@ -622,7 +624,7 @@ constexpr size_t sampler::stride_max;
 sampler::sampler(size_t _stride) noexcept :
         stride_(cast_to_range(_stride, stride_min, stride_max)),
         gen_(rd_()),
-        dist_(distribution_t::param_type(0, stride_ - 1)){}
+        dist_(distribution_t::param_type(0, stride_ - 1)) {}
 
 sampler::sampler(ros::NodeHandle &_nh) : gen_(rd_()) {
   ros::NodeHandle pnh(_nh, "icp");
