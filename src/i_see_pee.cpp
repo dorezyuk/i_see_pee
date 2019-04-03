@@ -299,13 +299,22 @@ void interface::callback(const nav_msgs::OccupancyGridConstPtr &_msg) noexcept {
 
 } // namespace map
 
-namespace scan{
+namespace scan {
 
 parameter::parameter(const sensor_msgs::LaserScan &_scan) noexcept :
         size(_scan.ranges.size()),
         increment(_scan.angle_increment),
         angle_min(_scan.angle_min),
-        angle_max(_scan.angle_max) {}
+        angle_max(_scan.angle_max) {
+  // check the integrity of the scan data: the scan rays are evenly distributed
+  // between [angle_min, angle_max] with both ends populated
+  const auto raw_size = (angle_max - angle_min) / increment + 1.f;
+  const auto imp_size = static_cast<size_t>(std::round(std::abs(raw_size)));
+  if (imp_size != size) {
+    I_SEE_PEE_WARN("implied size " << imp_size
+                                   << " differs from real size: " << size);
+  }
+}
 
 bool parameter::operator==(const parameter &_other) const noexcept {
   return size == _other.size &&
