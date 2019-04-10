@@ -16,3 +16,4 @@ icp:
   r_norm: 0.01 # min: 0.01
   max_iter: 100 # min: 1, max: 100
   stride: 3 # min: 1, max: 100
+  odom_weight: -1 # default -1, augmentation disabled below 0

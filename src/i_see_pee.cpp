@@ -543,19 +543,43 @@ matches::matches(const scan::scan_t &_scan, const map::knn_t &_knn) noexcept :
   sensor_.conservativeResize(Eigen::NoChange, jj);
 }
 
-weight_t get_weights(const matches &_data) {
-  // assert that the input data is well conditioned
-  assert(_data.map_.cols() == _data.sensor_.cols());
-  const auto cols = _data.map_.cols();
-  weight_t out(cols);
+constexpr float augmenter::def_weight;
+constexpr float augmenter::min_weight;
 
-  // iterate over match pairs
-  for (size_t cc = 0; cc < cols; ++cc) {
-    const auto unused = (_data.map_.col(cc) - _data.sensor_.col(cc)).norm();
-    out(cc) = 1;
+augmenter::augmenter(float _weight) noexcept : gen_(rd_()), weight_(_weight) {}
+augmenter::augmenter(ros::NodeHandle &_nh) : gen_(rd_()) {
+  ros::NodeHandle pnh(_nh, "icp");
+
+  weight_ = pnh.param("odom_weight", def_weight);
+}
+
+void augmenter::operator()(matches &_m,
+                           weight_t &_w,
+                           const transform_t &_odom_map,
+                           const transform_t &_odom_sensor) const noexcept {
+  if (weight_ > min_weight && valid(_m, _w)) {
+    // The "cleaner" implementation would be
+    //
+    // ...
+    // _m.map_.conservativeResize(Eigen::NoChange, _m.map_.cols() + 1)
+    // _m.sensor_.conservativeResize(Eigen::NoChange, _m.sensor_.cols() + 1)
+    // _w.conservativeResize(_w.rows() + 1)
+    // ...
+    //
+    // However, this might lead to re-allocating the entire data, leading to
+    // O(_m.size()) runtime complexity.
+    //
+    // Instead we assume, that the data stored in _m is sufficiently large, so
+    // overwriting one pair will not "harm".
+
+    // In order to give every match a fair chance, the overwritten match will
+    // be picked at random in the range [0, cols), where cols must be greater 0.
+    const auto cols = _m.map_.cols();
+    const auto index = static_cast<size_t>(dist_(gen_) * cols) % cols;
+    _m.map_.col(index) = _odom_map.translation();
+    _m.sensor_.col(index) = _odom_sensor.translation();
+    _w[index] = weight_;
   }
-
-  return std::move(out);
 }
 
 transform_t point_to_map(matches&& _data, weight_t&& _w){
@@ -664,14 +688,15 @@ constexpr size_t scan_matcher::max_iter;
 constexpr size_t scan_matcher::min_iter;
 
 scan_matcher::scan_matcher(ros::NodeHandle &_nh) :
-        map_(_nh), is_converged_(_nh), sample_(_nh), knn_(nullptr) {
+        map_(_nh), is_converged_(_nh), sample_(_nh), knn_(nullptr), augment_(_nh) {
   ros::NodeHandle pnh(_nh, "icp");
 
   const auto raw = pnh.param("max_iter", static_cast<int>(max_iter));
   iter_ = cast_to_range(static_cast<size_t>(raw), min_iter, max_iter);
 }
 
-transform_t scan_matcher::operator()(const scan::scan_t &_scan) {
+transform_t scan_matcher::operator()(const scan::scan_t &_scan,
+                                     const transform_t &_origin) {
   transform_t out(transform_t::Identity());
   if (!map_.move_data(knn_) && !knn_) {
     I_SEE_PEE_WARN("no map data available");
@@ -687,7 +712,10 @@ transform_t scan_matcher::operator()(const scan::scan_t &_scan) {
 
     // get the problem instance
     matches m(data, *knn_);
-    weight_t w = get_weights(m);
+    weight_t w(weight_t::Ones(m.map_.cols()));
+
+    // augment the data
+    augment_(m, w, _origin, out * _origin);
 
     // apply the icp algorithm
     const transform_t update = point_to_map(std::move(m), std::move(w));
@@ -719,7 +747,7 @@ void controller::update(const scan::scan_t &_scan,
   scan::scan_t map_scan(map_to_sensor * _scan);
 
   // apply icp to get the correction
-  const transform_t new_to_old = icp_(map_scan);
+  const transform_t new_to_old = icp_(map_scan, map_to_base);
 
   // calculate the correction
   const transform_t new_to_base = new_to_old * map_to_base;
