@@ -557,7 +557,7 @@ void augmenter::operator()(matches &_m,
                            weight_t &_w,
                            const transform_t &_odom_map,
                            const transform_t &_odom_sensor) const noexcept {
-  if (weight_ > min_weight) {
+  if (weight_ > min_weight && valid(_m, _w)) {
     // The "cleaner" implementation would be
     //
     // ...
@@ -573,7 +573,7 @@ void augmenter::operator()(matches &_m,
     // overwriting one pair will not "harm".
 
     // In order to give every match a fair chance, the overwritten match will
-    // be picked at random in the range [0, cols).
+    // be picked at random in the range [0, cols), where cols must be greater 0.
     const auto cols = _m.map_.cols();
     const auto index = static_cast<size_t>(dist_(gen_) * cols) % cols;
     _m.map_.col(index) = _odom_map.translation();

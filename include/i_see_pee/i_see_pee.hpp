@@ -317,11 +317,20 @@ struct matches{
   matches(const scan::scan_t& _sensor, const scan::scan_t& _map) noexcept;
   matches(const scan::scan_t& _scan, const map::knn_t& _knn) noexcept;
 
+  inline bool valid() const noexcept {
+    // for any operation we need both members to be equally large and non-empty
+    return sensor_.cols() == map_.cols() && sensor_.cols() > 0;
+  }
+
   scan::scan_t sensor_;
   scan::scan_t map_;
 };
 
 using weight_t = Eigen::VectorXf;
+
+inline bool valid(const matches& _m, const weight_t& _w) noexcept {
+  return _m.valid() && _m.sensor_.cols() == _w.rows();
+}
 
 struct augmenter {
 
