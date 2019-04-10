@@ -322,11 +322,32 @@ struct matches{
 };
 
 using weight_t = Eigen::VectorXf;
-weight_t get_weights(const matches& _data);
+
+struct augmenter {
+
+  static constexpr float def_weight = -1.f;
+  static constexpr float min_weight = 0.f;
+
+  explicit augmenter(float _weight) noexcept;
+  explicit augmenter(ros::NodeHandle &_nh);
+
+  void operator()(matches &_m,
+                  weight_t &_w,
+                  const transform_t &_odom_map,
+                  const transform_t &_odom_sensor) const noexcept;
+
+private:
+
+  std::random_device rd_;
+  mutable std::mt19937 gen_;
+  mutable std::uniform_real_distribution<float> dist_;
+
+  float weight_;
+};
 
 transform_t point_to_map(matches&& _data, weight_t&& _w);
 
-struct conversion_checker{
+struct conversion_checker {
 
   static constexpr float t_norm = 0.01f;
   static constexpr float r_norm = 0.01f;
@@ -368,11 +389,12 @@ struct scan_matcher {
   static constexpr size_t min_iter = 1;
 
   explicit scan_matcher(ros::NodeHandle& _nh);
-  transform_t operator()(const scan::scan_t& _scan);
+  transform_t operator()(const scan::scan_t &_scan, const transform_t &_origin);
 
 private:
   conversion_checker is_converged_;
   sampler sample_;
+  augmenter augment_;
   map::knn_ptr_t knn_;
   map::interface map_;
   size_t iter_;
