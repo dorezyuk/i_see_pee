@@ -131,6 +131,15 @@ random.
 - type: `int`
 - default: 3 (min: 1, max: 100)
 
+#### `icp/odom_weight`
+- replaces one random data point with assumed location of the base.
+Assigns the specified weight to this data point, giving all other points the
+default weight of 1.
+This "anchors" the final transformation to the initial guess - giving the
+odometry more weight.
+- type: `float`
+- default: -1 (disabled below 0)
+
 # Understanding
 
 When you want to play with the code, you should be lucky: `i_see_pee` is very
